@@ -1,0 +1,66 @@
+/* Tailwind base overrides & global styles */
+
+:root {
+  --gold: #FFD700;
+  --yellow: #FFC107;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
+    sans-serif;
+}
+
+/* Golden buttons */
+.btn-primary {
+  background-color: var(--gold);
+  color: #ffffff;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--yellow);
+  transform: translateY(-1px);
+}
+
+/* Cards */
+.card {
+  background: #fff;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+}
+
+/* Dark mode */
+.dark body {
+  background-color:  #1e293b;
+  color: #e5e7eb;
+}
+
+.dark .card {
+  background-color: #1e293b;
+}
+
+.dark .btn-primary {
+  color: #000;
+}
+/* Clamp product titles like Amazon */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
