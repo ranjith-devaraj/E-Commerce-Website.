@@ -1,0 +1,31 @@
+# Core Flask
+Flask
+Werkzeug
+Jinja2
+itsdangerous
+click
+
+# Flask Extensions
+Flask-Login
+Flask-Bcrypt
+Flask-PyMongo
+Flask-Session
+
+# MongoDB
+pymongo
+dnspython
+
+# OAuth (Google Login)
+Authlib
+requests
+oauthlib
+
+# Security & Utils
+python-dotenv
+email-validator
+
+# File & Image handling
+Pillow
+
+# Production server (IMPORTANT for hosting)
+gunicorn
