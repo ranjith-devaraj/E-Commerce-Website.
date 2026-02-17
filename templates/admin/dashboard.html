@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-6 text-black">Admin Dashboard</h1>
+
+<div class="grid md:grid-cols-3 gap-6">
+  <div class="card text-center">
+    <h2 class="text-xl font-semibold text-black">Total Orders</h2>
+    <p class="text-3xl text-yellow-500 font-bold mt-2">{{ total_orders }}</p>
+  </div>
+
+  <div class="card text-center">
+    <h2 class="text-xl font-semibold text-black">Revenue</h2>
+    <p class="text-3xl text-yellow-500 font-bold mt-2">₹{{ total_revenue }}</p>
+  </div>
+
+  <div class="card text-center">
+    <h2 class="text-xl font-semibold text-black">Pending Payments</h2>
+    <p class="text-3xl text-yellow-500 font-bold mt-2">{{ pending_payments }}</p>
+  </div>
+</div>
+
+
+
+<div class="mt-10 flex gap-4">
+  <a href="/admin/products" class="btn-primary">Manage Products</a>
+  <a href="/admin/orders" class="btn-primary">Manage Orders</a>
+  <a href="/admin/payments" class="btn-primary">Verify Payments</a>
+  <a href="/admin/banners" class="btn-primary">Banner uploads</a>
+  <a href="{{ url_for('admin.analytics') }}"class="btn-primary"> 📊 Analytics</a>
+  <a href="/admin/upi-settings" class="btn-primary">
+  UPI Settings
+</a>
+
+</div>
+<br>
+<form method="GET" class="flex flex-wrap gap-4 mb-8">
+
+  <!-- MONTH -->
+  <select name="month"
+          class="border p-2 rounded text-black">
+    {% for m in range(1, 13) %}
+      <option value="{{ m }}"
+        {% if m == selected_month %}selected{% endif %}>
+        {{ ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m-1] }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <!-- YEAR -->
+  <select name="year"
+          class="border p-2 rounded text-black">
+    {% for y in range(2025, 2055) %}
+      <option value="{{ y }}"
+        {% if y == selected_year %}selected{% endif %}>
+        {{ y }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <!-- SUBMIT -->
+  <button class="btn-primary">
+    Apply Filter
+  </button>
+
+</form>
+
+
+<!-- ================= ANALYTICS ================= -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10">
+
+  <!-- REVENUE BAR CHART -->
+  <div class="bg-white p-6 rounded-xl shadow">
+    <h2 class="text-lg font-semibold mb-4 text-black">
+      📊 Revenue Overview
+    </h2>
+    <canvas id="revenueChart"></canvas>
+  </div>
+
+  <!-- SALES PIE CHART -->
+  <div class="bg-white p-6 rounded-xl shadow">
+    <h2 class="text-lg font-semibold mb-4 text-black">
+      🥧 Sales Status
+    </h2>
+    <canvas id="salesChart"></canvas>
+  </div>
+
+</div>
+
+<!-- CHART JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+/* ---------- REVENUE BAR ---------- */
+new Chart(document.getElementById("revenueChart"), {
+  type: "bar",
+  data: {
+    labels: ["Total Revenue"],
+    datasets: [{
+      label: "Revenue (₹{{ total_revenue | int }})",
+      data: [{{ total_revenue | int }}],
+      backgroundColor: "#3b82f6"
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: { beginAtZero: true }
+    }
+  }
+});
+
+/* ---------- SALES PIE ---------- */
+new Chart(document.getElementById("salesChart"), {
+  type: "pie",
+  data: {
+    labels: ["Delivered", "Cancelled"],
+    datasets: [{
+      data: [
+        {{ delivered_count | int }},
+        {{ cancelled_count | int }}
+      ],
+      backgroundColor: ["#22c55e", "#ef4444"]
+    }]
+  },
+  options: {
+    responsive: true
+  }
+});
+</script>
+
+{% endblock %}

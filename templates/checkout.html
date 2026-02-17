@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Checkout{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-6 text-black">Checkout</h1>
+
+<div class="grid md:grid-cols-2 gap-8">
+
+  <!-- ================= ORDER SUMMARY ================= -->
+  <div class="card p-5">
+    <h2 class="text-xl font-semibold mb-4 text-black">Order Summary</h2>
+
+    {% for item in items %}
+  <div class="flex justify-between border-b py-2">
+    <span>{{ item.name }} × {{ item.qty }}</span>
+    <span>₹{{ item.item_total }}</span>
+  </div>
+      <div class="py-2">
+        {% if item.original_price %}
+          <div class="text-xs mt-1">
+            <span class="line-through text-gray-500">
+              ₹{{ item.original_price }} each
+            </span>
+            <span class="ml-2 text-green-600 font-semibold">
+              Offer ₹{{ item.price }}
+            </span>
+          </div>
+        {% endif %}
+
+      </div>
+    {% endfor %}
+
+    <div class="mt-5 text-lg font-bold text-black">
+      Total Amount: ₹{{ total }}
+    </div>
+  </div>
+
+  <!-- ================= ADDRESS + PAYMENT ================= -->
+  <div class="card p-5">
+    <h2 class="text-xl font-semibold mb-4 text-black">
+      Delivery Address
+    </h2>
+
+    <!-- ADDRESS -->
+    <textarea
+      name="address"
+      form="orderForm"
+      required
+      placeholder="Enter your full delivery address"
+      class="w-full p-3 border rounded mb-5 text-black"
+      rows="4"></textarea>
+
+    <h2 class="text-xl font-semibold mb-4 text-black">
+      Select a payment method
+    </h2>
+<form method="POST" action="/place-order" id="orderForm" class="space-y-4">
+
+  <!-- REQUIRED: source -->
+  <input type="hidden" name="source" value="{{ source }}">
+
+ <!-- ================= UPI OPTION ================= -->
+<label class="flex items-center gap-3 border p-3 rounded cursor-pointer text-black">
+  <input type="radio"
+         name="payment_method"
+         value="upi"
+         onclick="showUpiBox()"
+         required>
+  <span class="font-medium">UPI Payment</span>
+</label>
+
+<!-- 🔥 UPI PAY BOX -->
+<div id="upiBox" class="hidden space-y-3 mt-3">
+
+  <!-- SHOP INFO -->
+  <div class="text-sm text-gray-700">
+    Pay to <b>{{ shop_name }}</b><br>
+  </div>
+
+  <!-- PAY BUTTON (OPENS UPI APP) -->
+  <a
+    id="upiPayBtn"
+    href="upi://pay?pa={{ upi_id }}&pn={{ shop_name }}&am={{ total }}&cu=INR"
+    class="block text-center bg-yellow-400 hover:bg-yellow-500
+           text-black font-bold py-3 rounded-lg">
+    Pay ₹{{ total }} via UPI
+  </a>
+
+  <!-- UPI REFERENCE -->
+  <input
+    type="text"
+    name="upi_ref"
+    placeholder="Enter UPI Reference ID after payment"
+    class="w-full p-2 border rounded text-black"
+    required
+  >
+</div>
+  <!-- ================= COD OPTION ================= -->
+  <label class="flex items-center gap-3 border p-3 rounded cursor-pointer text-black">
+    <input type="radio" name="payment_method" value="cod">
+    <span class="font-medium">Cash on Delivery</span>
+  </label>
+
+  <!-- PLACE ORDER -->
+  <button class="btn-primary w-full mt-6">
+    Place Order ₹{{ total }}
+  </button>
+</form>
+
+
+<!-- ================= SCRIPT ================= -->
+<script>
+function showUpiBox() {
+  document.getElementById("upiBox").classList.remove("hidden");
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% block title %}Edit Product{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-6 text-black">Edit Product</h1>
+
+<form method="POST" enctype="multipart/form-data"
+      class="card max-w-4xl space-y-5">
+
+  <!-- BASIC INFO -->
+  <input type="text" name="name"
+         value="{{ product.name }}"
+         class="w-full p-2 border rounded text-black" required>
+
+  <input type="number" name="price"
+         value="{{ product.price }}"
+         class="w-full p-2 border rounded text-black" required>
+
+  <input type="text" name="category"
+         value="{{ product.category }}"
+         class="w-full p-2 border rounded text-black">
+
+  <input type="number" name="stock"
+         value="{{ product.stock }}"
+         class="w-full p-2 border rounded text-black" required>
+
+  <!-- OFFER -->
+  <div>
+    <label class="block font-medium text-black mb-1">
+      Offer Price (optional)
+    </label>
+    <input type="number" step="0.01"
+           name="offer_price"
+           value="{{ product.offer_price or '' }}"
+           class="w-full p-2 border rounded text-black">
+  </div>
+
+  <label class="flex items-center gap-2">
+    <input type="checkbox" name="is_offer"
+           {% if product.is_offer %}checked{% endif %}>
+    <span class="text-black">Mark as offer product</span>
+  </label>
+
+  <!-- ================= DESCRIPTION EDITOR ================= -->
+  <label class="font-semibold text-black">Description</label>
+
+  <div id="editor"
+       contenteditable="true"
+       class="w-full min-h-[250px] p-3 border rounded bg-white
+              text-black overflow-auto">
+    {{ product.description | safe }}
+  </div>
+
+  <input type="hidden" name="description" id="description">
+
+<!-- ================= SIMPLE TABLE BUILDER ================= -->
+<div class="mt-6">
+
+  <h3 class="text-lg font-semibold text-black mb-3">
+    Table Builder
+  </h3>
+
+  <div class="flex items-center gap-3 mb-3">
+
+    <input type="number" id="rows"
+           placeholder="Rows"
+           class="w-28 p-2 border rounded text-black">
+
+    <input type="number" id="cols"
+           placeholder="Columns"
+           class="w-28 p-2 border rounded text-black">
+
+    <button type="button"
+            onclick="createNewTable()"
+            class="btn-primary">
+      Create Table
+    </button>
+  </div>
+
+  <div class="flex gap-2">
+
+    <button type="button"
+            onclick="addRow()"
+            class="px-4 py-2 bg-green-600 text-white rounded">
+      + Row
+    </button>
+
+    <button type="button"
+            onclick="removeRow()"
+            class="px-4 py-2 bg-red-600 text-white rounded">
+      − Row
+    </button>
+
+    <button type="button"
+            onclick="addColumn()"
+            class="px-4 py-2 bg-green-600 text-white rounded">
+      + Column
+    </button>
+
+    <button type="button"
+            onclick="removeColumn()"
+            class="px-4 py-2 bg-red-600 text-white rounded">
+      − Column
+    </button>
+
+  </div>
+</div>
+<!-- ================= IMAGES ================= -->
+  <label class="font-semibold text-black">Add New Images</label>
+  <input type="file" name="images" multiple accept="image/*"
+         onchange="previewNewImages(event)"
+         class="w-full border rounded p-2">
+
+  <div id="newImagePreview"
+       class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
+
+  {% if product.images %}
+  <label class="font-semibold text-black mt-4 block">
+    Existing Images
+  </label>
+
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+    {% for img in product.images %}
+    <div class="relative">
+      <img src="{{ img if img.startswith('/static/') else '/static/uploads/' ~ img }}"
+           class="w-full h-32 object-cover rounded shadow">
+
+      <button type="button"
+              onclick="removeExistingImage('{{ img }}', this)"
+              class="absolute top-1 right-1 bg-red-600 text-white
+                     w-7 h-7 rounded-full font-bold">
+        ✕
+      </button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <input type="hidden" name="removed_images" id="removedImages">
+
+  <!-- ACTIONS -->
+  <div class="flex gap-4">
+    <button class="btn-primary">Update Product</button>
+    <a href="/admin/products"
+       class="text-gray-600 hover:underline">Cancel</a>
+  </div>
+
+</form>
+
+<!-- ================= SCRIPTS ================= -->
+<script>
+let removedImages = [];
+let currentTable = null;
+
+/* IMAGE REMOVE */
+function removeExistingImage(img, btn) {
+  removedImages.push(img);
+  document.getElementById("removedImages").value =
+    JSON.stringify(removedImages);
+  btn.parentElement.remove();
+}
+
+/* IMAGE PREVIEW */
+function previewNewImages(event) {
+  const container = document.getElementById("newImagePreview");
+  container.innerHTML = "";
+  [...event.target.files].forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      container.innerHTML += `
+        <img src="${e.target.result}"
+             class="w-full h-32 object-cover rounded shadow">
+      `;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+let activeTable = null;
+
+function createNewTable() {
+  const rows = parseInt(document.getElementById("rows").value);
+  const cols = parseInt(document.getElementById("cols").value);
+
+  if (!rows || !cols) {
+    alert("Enter rows and columns");
+    return;
+  }
+
+  const table = document.createElement("table");
+  table.style.width = "100%";
+  table.style.borderCollapse = "collapse";
+  table.style.marginTop = "15px";
+  table.style.tableLayout = "auto"; // 🔥 FIXED SIZE ISSUE
+
+  for (let r = 0; r < rows; r++) {
+    const tr = document.createElement("tr");
+
+    for (let c = 0; c < cols; c++) {
+      const td = document.createElement("td");
+      td.contentEditable = "true";
+      td.style.border = "1px solid black";
+      td.style.padding = "8px";
+      td.style.minWidth = "80px";
+      td.style.wordBreak = "break-word";
+      td.style.whiteSpace = "normal";
+      td.style.verticalAlign = "top";
+      tr.appendChild(td);
+    }
+    table.appendChild(tr);
+  }
+
+  document.getElementById("editor").appendChild(table);
+  activeTable = table;
+  placeCaretAfter(table);
+}
+
+/* -------- ROW -------- */
+function addRow() {
+  if (!activeTable) return alert("Create a table first");
+
+  const tr = activeTable.insertRow();
+  const cols = activeTable.rows[0].cells.length;
+
+  for (let i = 0; i < cols; i++) {
+    const td = tr.insertCell();
+    td.contentEditable = "true";
+    td.style.border = "1px solid black";
+    td.style.padding = "8px";
+    td.style.minWidth = "80px";
+    td.style.wordBreak = "break-word";
+  }
+}
+
+function removeRow() {
+  if (activeTable && activeTable.rows.length > 1) {
+    activeTable.deleteRow(-1);
+  }
+}
+
+/* -------- COLUMN -------- */
+function addColumn() {
+  if (!activeTable) return;
+
+  Array.from(activeTable.rows).forEach(row => {
+    const td = row.insertCell();
+    td.contentEditable = "true";
+    td.style.border = "1px solid black";
+    td.style.padding = "8px";
+    td.style.minWidth = "80px";
+    td.style.wordBreak = "break-word";
+  });
+}
+
+function removeColumn() {
+  if (!activeTable) return;
+
+  Array.from(activeTable.rows).forEach(row => {
+    if (row.cells.length > 1) {
+      row.deleteCell(-1);
+    }
+  });
+}
+
+/* -------- CARET -------- */
+function placeCaretAfter(el) {
+  const range = document.createRange();
+  const sel = window.getSelection();
+  range.setStartAfter(el);
+  range.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+/* SAVE DESCRIPTION */
+document.querySelector("form").addEventListener("submit", () => {
+  document.getElementById("description").value =
+    document.getElementById("editor").innerHTML;
+});
+</script>
+{% endblock %}

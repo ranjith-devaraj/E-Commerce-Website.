@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+{% block title %}Manage Products{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-6 text-black">Product Management</h1>
+
+<form method="POST" enctype="multipart/form-data"
+      class="card mb-8 space-y-4">
+
+  <input name="name" placeholder="Product Name"
+         required class="w-full p-2 border rounded text-black">
+
+  <input name="price" type="number" placeholder="Price"
+         required class="w-full p-2 border rounded text-black">
+
+  <input name="category" placeholder="Category"
+         class="w-full p-2 border rounded text-black">
+
+  <input name="stock" type="number" placeholder="Stock"
+         required class="w-full p-2 border rounded text-black">
+
+  <!-- ================= DESCRIPTION ================= -->
+  <label class="font-semibold text-black">Description</label>
+
+  <!-- VISUAL EDITOR -->
+  <div id="editor"
+       contenteditable="true"
+       class="w-full min-h-[200px] p-3 border rounded bg-white text-black overflow-auto">
+  </div>
+
+  <!-- HIDDEN INPUT -->
+  <input type="hidden" name="description" id="description">
+
+<!-- ================= SIMPLE TABLE BUILDER ================= -->
+<div class="mt-6">
+
+  <h3 class="text-lg font-semibold text-black mb-3">
+    Table Builder
+  </h3>
+
+  <div class="flex flex-wrap items-center gap-3 mb-3">
+
+    <input type="number" id="rows"
+           placeholder="Rows"
+           class="w-28 p-2 border rounded text-black">
+
+    <input type="number" id="cols"
+           placeholder="Columns"
+           class="w-28 p-2 border rounded text-black">
+
+    <button type="button"
+            onclick="createNewTable()"
+            class="btn-primary">
+      Create Table
+    </button>
+  </div>
+
+  <div class="flex flex-wrap gap-2">
+    <button type="button" onclick="addRow()"
+            class="px-4 py-2 bg-green-600 text-white rounded">
+      + Row
+    </button>
+
+    <button type="button" onclick="removeRow()"
+            class="px-4 py-2 bg-red-600 text-white rounded">
+      − Row
+    </button>
+
+    <button type="button" onclick="addColumn()"
+            class="px-4 py-2 bg-green-600 text-white rounded">
+      + Column
+    </button>
+
+    <button type="button" onclick="removeColumn()"
+            class="px-4 py-2 bg-red-600 text-white rounded">
+      − Column
+    </button>
+  </div>
+</div>
+  <!-- ================= IMAGES ================= -->
+  <label class="font-semibold text-black">Product Images</label>
+
+  <input type="file" name="images" multiple accept="image/*"
+         onchange="previewImages(event)"
+         class="border rounded w-full p-2">
+
+  <div id="previewContainer"
+       class="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
+
+  <button class="btn-primary">Add Product</button>
+</form>
+<!-- PREVIEW AREA -->
+<div id="previewContainer"
+     class="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+</div>
+</form>
+
+<div class="overflow-x-auto mt-8">
+  <table class="w-full border-collapse bg-slate-800 text-white rounded-lg overflow-hidden">
+
+    <!-- TABLE HEADER -->
+    <thead class="bg-slate-900">
+      <tr>
+        <th class="px-6 py-3 text-left">Name</th>
+        <th class="px-6 py-3 text-center">Price</th>
+        <th class="px-6 py-3 text-center">Stock</th>
+        <th class="px-6 py-3 text-center">Action</th>
+      </tr>
+    </thead>
+
+    <!-- TABLE BODY -->
+    <tbody>
+  {% for product in products %}
+  <tr class="border-t border-slate-700 hover:bg-slate-700 transition">
+
+    <!-- NAME + OFFER BADGE -->
+    <td class="px-6 py-4 text-left flex items-center gap-2">
+      <span>{{ product.name }}</span>
+
+      {% if product.is_offer and product.offer_price %}
+        <span
+          class="bg-red-600 text-white text-xs px-2 py-0.5 rounded-full font-semibold">
+          OFFER
+        </span>
+      {% endif %}
+    </td>
+
+    <!-- PRICE -->
+    <td class="px-6 py-4 text-center">
+  {% if product.is_offer and product.offer_price %}
+    <div class="font-semibold text-white">
+      ₹{{ product.offer_price }}
+    </div>
+
+    <div class="text-sm text-gray-500 line-through">
+      ₹{{ product.price }}
+    </div>
+  {% else %}
+    <div class="font-semibold">
+      ₹{{ product.price }}
+    </div>
+  {% endif %}
+</td>
+
+    <!-- STOCK -->
+    <td class="px-6 py-4 text-center">
+      {{ product.stock }}
+    </td>
+
+    <!-- ACTION -->
+    <td class="px-6 py-4 text-center space-x-4">
+      <a href="{{ url_for('admin.edit_product', product_id=product._id) }}"
+         class="text-yellow-400 hover:underline font-semibold">
+        Edit
+      </a>
+
+      <a href="{{ url_for('admin.delete_product', product_id=product._id) }}"
+         class="text-red-500 hover:underline font-semibold"
+         onclick="return confirm('Delete this product?')">
+        Delete
+      </a>
+    </td>
+
+  </tr>
+  {% endfor %}
+</tbody>
+
+
+  </table>
+</div>
+
+
+<!-- IMAGE PREVIEW -->
+<script>
+function previewImages(event) {
+  const container = document.getElementById("previewContainer");
+  container.innerHTML = "";
+  Array.from(event.target.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      container.innerHTML += `
+        <img src="${e.target.result}"
+             class="w-full h-32 object-cover rounded shadow">
+      `;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+</script>
+
+<!-- TABLE + CURSOR LOGIC -->
+<script>
+let activeTable = null;
+
+function createNewTable() {
+  const rows = parseInt(document.getElementById("rows").value);
+  const cols = parseInt(document.getElementById("cols").value);
+
+  if (!rows || !cols) {
+    alert("Enter valid rows and columns");
+    return;
+  }
+
+  const table = document.createElement("table");
+
+  /* 🔥 VISUAL FIXES */
+  table.style.width = "100%";
+  table.style.maxWidth = "100%";
+  table.style.borderCollapse = "collapse";
+  table.style.marginTop = "16px";
+  table.style.tableLayout = "fixed"; // 🔒 prevents stretching
+
+  for (let r = 0; r < rows; r++) {
+    const tr = document.createElement("tr");
+
+    for (let c = 0; c < cols; c++) {
+      const td = document.createElement("td");
+      td.contentEditable = "true";
+      td.innerHTML = "";
+
+      /* 🔥 CELL STYLING */
+      td.style.border = "1.5px solid #000";
+      td.style.padding = "10px";
+      td.style.wordBreak = "break-word";
+      td.style.whiteSpace = "normal";
+      td.style.verticalAlign = "top";
+      td.style.fontSize = "14px";
+      td.style.background = "#fff";
+
+      tr.appendChild(td);
+    }
+
+    table.appendChild(tr);
+  }
+
+  document.getElementById("editor").appendChild(table);
+
+  activeTable = table;
+  placeCaretAfter(table);
+}
+
+/* -------- ROW -------- */
+function addRow() {
+  if (!activeTable) return alert("Create a table first");
+
+  const cols = activeTable.rows[0].cells.length;
+  const tr = activeTable.insertRow();
+
+  for (let i = 0; i < cols; i++) {
+    const td = tr.insertCell();
+    td.contentEditable = "true";
+    td.style.border = "1.5px solid #000";
+    td.style.padding = "10px";
+    td.style.wordBreak = "break-word";
+    td.style.whiteSpace = "normal";
+    td.style.verticalAlign = "top";
+  }
+}
+
+function removeRow() {
+  if (activeTable && activeTable.rows.length > 1) {
+    activeTable.deleteRow(-1);
+  }
+}
+
+/* -------- COLUMN -------- */
+function addColumn() {
+  if (!activeTable) return;
+
+  Array.from(activeTable.rows).forEach(row => {
+    const td = row.insertCell();
+    td.contentEditable = "true";
+    td.style.border = "1.5px solid #000";
+    td.style.padding = "10px";
+    td.style.wordBreak = "break-word";
+    td.style.whiteSpace = "normal";
+    td.style.verticalAlign = "top";
+  });
+}
+
+function removeColumn() {
+  if (!activeTable) return;
+
+  Array.from(activeTable.rows).forEach(row => {
+    if (row.cells.length > 1) {
+      row.deleteCell(-1);
+    }
+  });
+}
+
+/* -------- CARET -------- */
+function placeCaretAfter(el) {
+  const range = document.createRange();
+  const sel = window.getSelection();
+  range.setStartAfter(el);
+  range.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+/* -------- SAVE DESCRIPTION -------- */
+document.querySelector("form").addEventListener("submit", () => {
+  document.getElementById("description").value =
+    document.getElementById("editor").innerHTML;
+});
+
+</script>
+{% endblock %}

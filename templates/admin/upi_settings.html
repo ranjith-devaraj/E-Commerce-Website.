@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}UPI Settings{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">UPI Settings</h1>
+
+<form method="POST" class="card max-w-lg space-y-4">
+
+  <div>
+    <label class="block font-semibold mb-1">UPI ID</label>
+    <input
+      type="text"
+      name="upi_id"
+      value="{{ settings.upi_id if settings }}"
+      placeholder="example@upi"
+      required
+      class="w-full p-2 border rounded"
+    >
+  </div>
+
+  <div>
+    <label class="block font-semibold mb-1">Shop Name</label>
+    <input
+      type="text"
+      name="shop_name"
+      value="{{ settings.shop_name if settings }}"
+      placeholder="My Shop"
+      required
+      class="w-full p-2 border rounded"
+    >
+  </div>
+
+  <button class="btn-primary w-full">
+    Save UPI Settings
+  </button>
+
+</form>
+{% endblock %}

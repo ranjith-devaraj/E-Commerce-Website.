@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Admin Orders{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-6 text-black">Manage Orders</h1>
+
+{% if orders %}
+  {% for order in orders %}
+
+    <div class="card mb-4
+      {% if order.status == 'Cancelled' %}
+        border-2 border-red-500 bg-red-50 dark:bg-red-900/20
+      {% endif %}
+    ">
+
+      <!-- HEADER -->
+      <div class="flex justify-between items-center mb-2 text-black">
+        <div class="font-semibold">
+          Order ID: {{ order._id }}
+        </div>
+        <div class="text-sm text-gray-500">
+          {{ order.created_at.strftime("%d %b %Y") if order.created_at }}
+        </div>
+      </div>
+
+      <!-- ITEMS -->
+      <ul class="text-sm mb-3">
+        {% for item in order["items"] %}
+          <li class="flex justify-between border-b py-1 text-black">
+            <span>{{ item.name }} × {{ item.qty }}</span>
+            <span>₹{{ item.item_total }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+
+      <!-- FOOTER -->
+      <div class="flex justify-between items-center mt-4">
+
+        <!-- TOTAL -->
+        <div class="font-bold text-black">
+          Total: ₹{{ order.total_amount or 0 }}
+        </div>
+
+        <!-- VIEW BUTTON -->
+        <a href="{{ url_for('admin.view_order', order_id=order._id) }}"
+           class="px-4 py-2 bg-blue-600 hover:bg-blue-700
+                  text-white rounded text-sm font-medium">
+          View
+        </a>
+
+      </div>
+
+      {% if order.status == "Cancelled" and order.cancelled_at %}
+        <div class="text-xs text-red-500 mt-2">
+          Cancelled at:
+          {{ order.cancelled_at.strftime("%d %b %Y %H:%M") }}
+        </div>
+      {% endif %}
+
+    </div>
+
+  {% endfor %}
+{% else %}
+  <p class="text-gray-500">No orders available.</p>
+{% endif %}
+
+{% endblock %}

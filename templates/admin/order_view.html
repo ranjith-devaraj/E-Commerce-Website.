@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="text-2xl font-bold mb-6 text-black">Order Details</h2>
+
+<!-- ORDER INFO -->
+<div class="bg-white p-6 rounded shadow space-y-3 text-black">
+
+  <p><strong>Order ID:</strong> {{ order["_id"] }}</p>
+  <p><strong>Order Status:</strong> {{ order["status"] }}</p>
+  <p><strong>Payment Method:</strong> {{ order["payment_method"]|upper }}</p>
+
+  <!-- ================= UPI PAYMENT INFO ================= -->
+{% if order.payment_method == "upi" %}
+<p>
+  <strong>Payment Status:</strong>
+  {% if order.payment_status == "VERIFIED" %}
+    <span class="text-green-600 font-semibold">Verified</span>
+  {% elif order.payment_status == "REJECTED" %}
+    <span class="text-red-600 font-semibold">Rejected</span>
+  {% else %}
+    <span class="text-yellow-600 font-semibold">Pending</span>
+  {% endif %}
+</p>
+{% endif %}
+
+
+
+  <p class="mt-2">
+    <strong>Total Amount:</strong> ₹{{ order["total_amount"] }}
+  </p>
+
+</div>
+
+<!-- ================= ORDER STATUS UPDATE ================= -->
+<div class="bg-white p-6 rounded shadow mt-6 text-black">
+  <h3 class="text-lg font-semibold mb-3">Update Order Status</h3>
+
+  <form method="POST" action="{{ url_for('admin.update_order_status') }}"
+        class="flex items-center gap-4">
+
+    <input type="hidden" name="order_id" value="{{ order._id }}">
+
+    <select name="status"
+            class="border px-3 py-2 rounded">
+      <option>Order Placed</option>
+      <option>Packed</option>
+      <option>Shipped</option>
+      <option>Out for Delivery</option>
+      <option>Delivered</option>
+      <option>Cancelled</option>
+    </select>
+
+    <button
+      type="submit"
+      class="bg-blue-600 hover:bg-blue-700
+             text-white px-4 py-2 rounded">
+      Update
+    </button>
+  </form>
+</div>
+
+<!-- ================= ADDRESS ================= -->
+<div class="card mb-4 text-black">
+  <h3 class="font-semibold mb-2 text-black">Delivery Address</h3>
+
+  {% if order.address %}
+    {% if order.address is mapping %}
+      {% for val in order.address.values() %}
+        <p>{{ val }}</p>
+      {% endfor %}
+    {% else %}
+      <p>{{ order.address }}</p>
+    {% endif %}
+  {% else %}
+    <p>-</p>
+  {% endif %}
+</div>
+
+<!-- ================= ITEMS ================= -->
+<div class="bg-white p-6 rounded shadow mt-6 text-black">
+  <h3 class="text-lg font-semibold mb-4">Items</h3>
+
+  {% for item in order["items"] %}
+    <div class="flex justify-between border-b py-2">
+      <span>{{ item["name"] }} × {{ item["qty"] }}</span>
+      <span>₹{{ item["item_total"] }}</span>
+    </div>
+  {% endfor %}
+</div>
+
+<!-- ================= ACTIONS ================= -->
+<div class="flex gap-4 mt-6">
+
+  <a href="{{ url_for('admin.print_order', order_id=order['_id']) }}"
+     class="bg-green-600 hover:bg-green-700
+            text-white px-4 py-2 rounded">
+    Print PDF
+  </a>
+
+  <a href="{{ url_for('admin.admin_orders') }}"
+     class="bg-gray-500 hover:bg-gray-600
+            text-white px-4 py-2 rounded">
+    Back
+  </a>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-6 py-6">
+
+  <h2 class="text-2xl font-bold mb-6 text-black">Payment Verification</h2>
+
+  <!-- ===================== PENDING PAYMENTS ===================== -->
+  {% if payments and payments|length > 0 %}
+    <h3 class="text-lg font-semibold mb-4 text-black">
+      Pending UPI Payments💸
+    </h3>
+
+    <div class="space-y-6 mb-10">
+
+      {% for payment in payments %}
+      <div class="bg-white rounded-lg shadow p-5 flex justify-between items-start">
+
+        <!-- LEFT -->
+        <div>
+          <p class="text-sm text-black">
+            <strong>Order ID:</strong>
+            <span class="font-mono">{{ payment._id }}</span>
+          </p>
+
+          <p class="mt-2 text-black">
+            <strong>Payment Method:</strong>
+            {{ payment.payment_method|upper }}
+          </p>
+
+          <p class="mt-1 text-black">
+            <strong>UPI Ref:</strong>
+            {{ payment.upi_ref }}
+          </p>
+
+          <p class="mt-1 text-black">
+            <strong>Total Amount:</strong>
+            ₹{{ payment.total_amount }}
+          </p>
+
+          <p class="mt-1 text-black">
+            <strong>Status:</strong>
+            <span class="text-yellow-600 font-semibold">
+              Pending Verification
+            </span>
+          </p>
+
+          <p class="mt-1 text-sm text-gray-500">
+            {{ payment.created_at.strftime("%d %b %Y, %I:%M %p") if payment.created_at }}
+          </p>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="flex gap-3">
+          <form method="POST" action="{{ url_for('admin.verify_payment_action') }}">
+            <input type="hidden" name="order_id" value="{{ payment._id }}">
+            <input type="hidden" name="action" value="verify">
+            <button class="bg-green-600 text-white px-4 py-2 rounded">
+              Verify
+            </button>
+          </form>
+
+          <form method="POST" action="{{ url_for('admin.verify_payment_action') }}">
+            <input type="hidden" name="order_id" value="{{ payment._id }}">
+            <input type="hidden" name="action" value="reject">
+            <button class="bg-red-600 text-white px-4 py-2 rounded">
+              Reject
+            </button>
+          </form>
+        </div>
+
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-gray-400 mb-10">No pending UPI payments.</p>
+  {% endif %}
+
+  <!-- ===================== PROCESSED PAYMENTS ===================== -->
+  {% if processed_payments and processed_payments|length > 0 %}
+    <h3 class="text-lg font-semibold mb-4 text-black">
+      Processed UPI Payments 📋
+    </h3>
+
+    <div class="overflow-x-auto bg-white rounded shadow">
+      <table class="min-w-full border-collapse text-sm">
+        <thead class="bg-gray-100">
+          <tr class="text-left text-black">
+            <th class="p-3 border">Order ID</th>
+            <th class="p-3 border">UPI Ref</th>
+            <th class="p-3 border">Amount</th>
+            <th class="p-3 border">Payment Status</th>
+            <th class="p-3 border">Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for payment in processed_payments %}
+          <tr class="border-t text-black">
+            <td class="p-3 border font-mono">
+              {{ payment._id }}
+            </td>
+
+            <td class="p-3 border">
+              {{ payment.upi_ref or "-" }}
+            </td>
+
+            <td class="p-3 border">
+              ₹{{ payment.total_amount }}
+            </td>
+
+            <td class="p-3 border font-semibold
+              {% if payment.payment_status == 'VERIFIED' %}
+                text-green-600
+              {% else %}
+                text-red-600
+              {% endif %}
+            ">
+              {{ payment.payment_status }}
+            </td>
+
+            <td class="p-3 border text-xs text-gray-500">
+              {{ payment.created_at.strftime("%d %b %Y") if payment.created_at }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-gray-400">No verified or rejected payments yet.</p>
+  {% endif %}
+<!-- ===================== CASH ON DELIVERY ===================== -->
+{% if cod_orders and cod_orders|length > 0 %}
+<h3 class="">Cash on Delivery Orders List 📋</h3>
+  <h3 class="text-lg font-semibold mt-12 mb-4 text-black">
+    Cash on Delivery Orders
+  </h3>
+
+  <div class="overflow-x-auto bg-white rounded shadow">
+    <table class="min-w-full border-collapse text-sm">
+      <thead class="bg-gray-100">
+        <tr class="text-left text-black">
+          <th class="p-3 border">Order ID</th>
+          <th class="p-3 border">Payment Method</th>
+          <th class="p-3 border">Amount</th>
+          <th class="p-3 border">Date & Time</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for order in cod_orders %}
+        <tr class="border-t text-black">
+          <td class="p-3 border font-mono">
+            {{ order._id }}
+          </td>
+
+          <td class="p-3 border font-semibold text-blue-600">
+            Cash on Delivery
+          </td>
+
+          <td class="p-3 border font-semibold">
+            ₹{{ order.total_amount }}
+          </td>
+
+          <td class="p-3 border text-xs text-gray-500">
+            {{ order.created_at.strftime("%d %b %Y") if order.created_at }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p class="text-gray-400 mt-6">
+    No Cash on Delivery orders.
+  </p>
+{% endif %}
+   
+</div>
+{% endblock %}
+  

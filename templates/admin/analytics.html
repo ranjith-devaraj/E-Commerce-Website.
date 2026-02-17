@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Product Analytics{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-6 text-black">📊 Product Analytics</h1>
+
+<!-- PRODUCT SELECT -->
+<form method="GET" class="mb-8 max-w-md">
+  <label class="block mb-2 font-semibold text-black">
+    Select Product
+  </label>
+
+  <select name="product_id"
+          onchange="this.form.submit()"
+          class="w-full border p-2 rounded text-black">
+    <option value="">-- Choose Product --</option>
+    {% for p in products %}
+      <option value="{{ p._id }}"
+        {% if selected_product == p._id|string %}selected{% endif %}>
+        {{ p.name }}
+      </option>
+    {% endfor %}
+  </select>
+</form>
+
+{% if analytics %}
+{% if analytics %}
+<form method="GET"
+      action="{{ url_for('admin.download_analytics_report') }}"
+      class="mb-6">
+  <input type="hidden" name="product_id" value="{{ selected_product }}">
+  <button
+    type="submit"
+    class="px-5 py-2 bg-blue-600 hover:bg-blue-700
+           text-white rounded font-semibold">
+    ⬇ Download Report (PDF)
+  </button>
+</form>
+{% endif %}
+    
+<!-- CHARTS -->
+<div class="grid md:grid-cols-2 gap-8">
+
+  <!-- PIE CHART -->
+  <div class="bg-white p-4 rounded shadow">
+    <h2 class="font-semibold mb-4 text-black">Delivery vs Cancel</h2>
+    <canvas id="pieChart"></canvas>
+  </div>
+
+  <!-- BAR CHART -->
+  <div class="bg-white p-4 rounded shadow">
+    <h2 class="font-semibold mb-4 text-black">Sales Quantity</h2>
+    <canvas id="barChart"></canvas>
+  </div>
+
+</div>
+{% else %}
+<p class="text-gray-500 mt-6">
+  Select a product to view analytics
+</p>
+{% endif %}
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+{% if analytics %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const pieCanvas = document.getElementById("pieChart");
+  const barCanvas = document.getElementById("barChart");
+
+  if (pieCanvas) {
+    new Chart(pieCanvas.getContext("2d"), {
+      type: "pie",
+      data: {
+        labels: ["Delivered", "Cancelled"],
+        datasets: [{
+          data: [
+            {{ analytics.delivered | int }},
+            {{ analytics.cancelled | int }}
+          ],
+          backgroundColor: ["#22c55e", "#ef4444"]
+        }]
+      }
+    });
+  }
+
+  if (barCanvas) {
+    new Chart(barCanvas.getContext("2d"), {
+      type: "bar",
+      data: {
+        labels: ["Total Sold"],
+        datasets: [{
+          label: "Units Sold",
+          data: [{{ analytics.sold_qty | int }}],
+          backgroundColor: "#3b82f6"
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+  }
+
+});
+</script>
+{% endif %}
+
+{% endblock %}

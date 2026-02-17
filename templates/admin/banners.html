@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Manage Banners{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-6 text-black">Manage Banners</h1>
+
+<!-- UPLOAD FORM -->
+<form method="POST" enctype="multipart/form-data" class="card mb-8 space-y-4">
+
+  <input name="link" placeholder="Redirect Link (optional)"
+         class="w-full p-2 border rounded text-black">
+
+  <input type="file" name="image" accept="image/*"
+         required class="w-full p-2 border rounded text-black">
+
+  <button class="btn-primary">Upload Banner</button>
+</form>
+
+<!-- BANNERS GRID -->
+{% if banners %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+  {% for banner in banners %}
+  <div class="relative group rounded-xl overflow-hidden shadow-lg">
+
+    <!-- IMAGE -->
+    <img src="{{ banner.image }}"
+         class="w-full h-44 object-cover">
+
+    <!-- ❌ REMOVE BADGE -->
+    <form method="POST"
+      action="{{ url_for('admin.delete_banner', banner_id=banner._id) }}"
+      onsubmit="return confirm('Delete this banner?')">
+  <button class="text-red-600 font-semibold">
+    🗑️ Delete
+  </button>
+</form>
+
+
+    <!-- TITLE -->
+    {% if banner.title %}
+    <div class="absolute bottom-0 inset-x-0
+                bg-black/60 text-white
+                text-sm p-2">
+      {{ banner.title }}
+    </div>
+    {% endif %}
+
+  </div>
+  {% endfor %}
+
+</div>
+{% else %}
+<p class="text-gray-500">No banners uploaded yet.</p>
+{% endif %}
+  <p class="text-red-600">
+  Banner count: {{ banners|length if banners else 0 }}
+</p>
+
+{% endblock %}

@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}{{ category_name }}{% endblock %}
+
+{% block content %}
+
+<div class="max-w-7xl mx-auto px-4">
+
+  <!-- ================= HEADER ================= -->
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-2xl font-bold text-black">
+      {{ category_name }}
+    </h1>
+
+    <!-- BACK BUTTON -->
+    <a href="{{ url_for('shop.categories') }}"
+       class="px-4 py-2 bg-gray-200 hover:bg-gray-300
+              rounded-lg text-sm font-semibold text-black">
+      ← Back
+    </a>
+  </div>
+
+  <!-- ================= DEALS FOR YOU ================= -->
+  {% if offer_products and offer_products|length > 0 %}
+  <h2 class="text-xl font-semibold mb-6 text-black flex items-center gap-2">
+    🔥 Deals for You
+  </h2>
+
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-14">
+
+    {% for product in offer_products %}
+    <div class="bg-white rounded-2xl p-4 shadow-md
+                hover:shadow-xl hover:-translate-y-1
+                transition-all duration-300 relative">
+
+      <!-- OFFER BADGE -->
+      <span class="absolute top-3 left-3 bg-red-600 text-white
+                   text-xs px-2 py-1 rounded">
+        OFFER
+      </span>
+
+      <!-- IMAGE -->
+      <div class="h-44 mb-3 overflow-hidden rounded-lg">
+        <img
+          src="{{ product.image if product.image.startswith('/static/') else '/static/uploads/' ~ product.image }}"
+          class="w-full h-full object-cover "
+          alt="{{ product.name }}"
+        >
+      </div>
+
+      <!-- NAME -->
+      <p class="text-sm font-medium line-clamp-2 mb-2 text-black">
+        {{ product.name }}
+      </p>
+
+      <!-- PRICE -->
+      <div class="mb-3">
+        <span class="text-lg font-bold text-green-600">
+          ₹{{ product.offer_price }}
+        </span>
+        <span class="text-sm text-gray-500 line-through ml-1">
+          ₹{{ product.price }}
+        </span>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="flex justify-between items-center">
+        <a href="/product/{{ product._id }}"
+           class="text-sm text-blue-600 font-semibold hover:underline">
+          View
+        </a>
+
+        <button onclick="addToCart('{{ product._id }}')"
+                class="w-10  h-10 bg-yellow-400 hover:bg-yellow-500
+                       rounded-full text-black font-bold">
+                       <!--icons cart!-->
+          <i class="fa-solid fa-cart-shopping text-xl"></i>
+        </button>
+      </div>
+
+    </div>
+    {% endfor %}
+
+  </div>
+  {% endif %}
+
+  <!-- ================= ALL PRODUCTS ================= -->
+  <h2 class="text-xl font-semibold mb-6 text-black flex items-center gap-2">
+    🛍️ All Products
+  </h2>
+
+  {% if products and products|length > 0 %}
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+
+    {% for product in products %}
+      {% if not product.is_offer %}
+      <div class="bg-white rounded-2xl p-4 shadow-md
+                  hover:shadow-xl hover:-translate-y-1
+                  transition-all duration-300">
+
+        <!-- IMAGE -->
+        <div class="h-44 mb-3 overflow-hidden rounded-lg">
+          <img
+            src="{{ product.image if product.image.startswith('/static/') else '/static/uploads/' ~ product.image }}"
+            class="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+            alt="{{ product.name }}"
+          >
+        </div>
+
+        <!-- NAME -->
+        <p class="text-sm font-medium line-clamp-2 mb-2 text-black">
+          {{ product.name }}
+        </p>
+
+        <!-- PRICE -->
+        <div class="mb-3">
+          <span class="text-lg font-bold text-black">
+            ₹{{ product.price }}
+          </span>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="flex justify-between items-center">
+          <a href="/product/{{ product._id }}"
+             class="text-sm text-blue-600 font-semibold hover:underline">
+            View
+          </a>
+
+          <button onclick="addToCart('{{ product._id }}')"
+                  class="w-9 h-9 bg-yellow-400 hover:bg-yellow-500
+                         rounded-full text-black font-bold">
+            <i class="fa-solid fa-cart-shopping text-xl"></i>
+          </button>
+        </div>
+
+      </div>
+      {% endif %}
+    {% endfor %}
+
+  </div>
+  {% else %}
+    <p class="text-gray-500">No products available.</p>
+  {% endif %}
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-100 transition-colors duration-300">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Shop{% endblock %}</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+
+<body class="min-h-screen text-gray-900">
+
+<!-- ================= NAVBAR ================= -->
+<nav class="bg-slate-900 shadow-md">
+  <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+
+    <!-- LOGO -->
+    <a href="/" class="flex items-center gap-3">
+      <img src="{{ url_for('static', filename='images/logo.Webp') }}"
+           class="h-10 object-contain">
+      <span class="text-xl md:text-2xl font-bold text-yellow-500">
+  {% if current_user.is_authenticated and current_user.role == "admin" %}
+    Admin Panel
+  {% elif current_user.is_authenticated and current_user.role == "finance" %}
+    Finance Panel
+  {% else %}
+    E-Commerce Shop
+  {% endif %}
+</span>
+
+    </a>
+
+   <!-- ================= DESKTOP MENU ================= -->
+<div class="hidden md:flex items-center gap-6">
+
+  {% if current_user.is_authenticated and current_user.role in ["admin", "finance"] %}
+
+    <!-- 🔐 ADMIN / FINANCE NAV -->
+    <a href="/admin/dashboard"
+       class="btn-primary">
+      Dashboard
+    </a>
+
+    <a href="/logout"
+       class="text-red-500 font-medium">
+      Logout
+    </a>
+
+  {% else %}
+
+    <!-- 👤 USER NAV -->
+    <a href="/" class="text-white hover:text-yellow-500">
+      <i class="fa-solid fa-house text-xl"></i>
+    </a>
+
+    <a href="{{ url_for('shop.categories') }}"
+       class="text-white hover:text-yellow-500">
+      <i class="fa-solid fa-list text-xl"></i>
+    </a>
+
+    {% if current_user.is_authenticated %}
+
+      <a href="/orders"
+         class="text-white hover:text-yellow-500">
+        <i class="fa-solid fa-truck-fast text-xl"></i>
+      </a>
+
+      <a href="/cart"
+         class="relative text-white hover:text-yellow-500 text-xl">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <span id="cartBadge"
+              class="absolute -top-2 -right-3 bg-red-600 text-white
+                     text-xs font-bold px-1.5 py-0.5 rounded-full hidden">
+          0
+        </span>
+      </a>
+
+      <!-- 🔔 Notifications -->
+      <div class="relative">
+        <button onclick="toggleNotifications()"
+                class="relative text-white hover:text-yellow-500 text-xl">
+          <i class="fa-solid fa-bell"></i>
+          <span id="notificationBadge"
+                class="absolute -top-2 -right-2 bg-red-600 text-white
+                       text-xs px-1.5 py-0.5 rounded-full hidden">
+            0
+          </span>
+        </button>
+
+        <div id="notificationDropdown"
+             class="hidden absolute right-0 mt-3 w-80
+                    bg-white rounded-lg shadow-lg z-50">
+          <div class="flex justify-between items-center p-3 border-b">
+            <span class="font-semibold text-black">Notifications</span>
+            <button onclick="clearNotifications()"
+                    class="text-sm text-red-500 hover:underline">
+              Clear All
+            </button>
+          </div>
+          <div id="notificationList"
+               class="max-h-80 overflow-y-auto"></div>
+        </div>
+      </div>
+
+      <a href="/logout" class="text-red-500">
+        <i class="fa-solid fa-right-from-bracket text-xl"></i>
+      </a>
+
+    {% else %}
+
+      <a href="/login"
+         class="text-green-500 hover:text-green-600">
+        <i class="fa-solid fa-user text-xl"></i>
+      </a>
+
+    {% endif %}
+  {% endif %}
+</div>
+<!---==== MOBILE RIGHT ==================-->
+    <div class="flex items-center gap-4 md:hidden">
+
+      {% if current_user.is_authenticated %}
+      <!-- 🔔 MOBILE BELL -->
+      <button onclick="toggleNotificationCenterMobile()"
+              class="relative text-white text-xl">
+        <i class="fa-solid fa-bell"></i>
+        <span id="mobileNotifyBadge"
+              class="absolute -top-2 -right-2 bg-red-600 text-white
+                     text-xs px-1.5 py-0.5 rounded-full hidden">0</span>
+      </button>
+      {% endif %}
+
+      <!-- ☰ -->
+      <button onclick="toggleMenu()" class="text-white text-2xl">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= MOBILE MENU ================= -->
+  <div id="mobileMenu" class="hidden md:hidden bg-slate-900 border-t px-4 py-4">
+    <a href="/" class="block text-white">Home</a>
+    <a href="/orders" class="block text-white">Orders</a>
+    <a href="/cart" class="block text-white">Cart</a>
+    <a href="/logout" class="block text-red-500">Logout</a>
+  </div>
+</nav>
+
+<!-- ================= MOBILE NOTIFICATION CENTER ================= -->
+<div id="notificationCenterMobile"
+     class="hidden fixed top-16 right-3 w-[92vw] max-w-sm
+            bg-white rounded-xl shadow-xl z-50">
+
+  <div class="flex justify-between items-center px-4 py-3 border-b">
+    <span class="font-semibold">Notifications</span>
+    <button onclick="clearNotifications()"
+            class="text-sm text-red-500">Clear</button>
+  </div>
+
+  <div id="notificationListMobile" class="max-h-80 overflow-y-auto">
+    <p class="p-4 text-gray-500 text-sm">No notifications</p>
+  </div>
+</div>
+
+<!-- ================= CONTENT ================= -->
+<main class="max-w-7xl mx-auto p-6">
+  {% block content %}{% endblock %}
+</main>
+
+<!-- ================= JS ================= -->
+<script>
+function toggleMenu() {
+  document.getElementById("mobileMenu")?.classList.toggle("hidden");
+}
+
+function toggleNotifications() {
+  document.getElementById("notificationDropdown")
+    ?.classList.toggle("hidden");
+}
+
+function toggleNotificationCenterMobile() {
+  document.getElementById("notificationCenterMobile")
+    ?.classList.toggle("hidden");
+}
+
+/* ================= CART BADGE ================= */
+function updateCartBadge() {
+  fetch("/cart/count")
+    .then(r => r.json())
+    .then(d => {
+      const b = document.getElementById("cartBadge");
+      if (!b) return;
+
+      b.textContent = d.count;
+      b.classList.toggle("hidden", d.count === 0);
+    })
+    .catch(() => {});
+}
+
+/* ================= LOAD NOTIFICATIONS ================= */
+function loadNotifications() {
+  fetch("/notifications")
+    .then(r => r.json())
+    .then(d => {
+
+      if (!Array.isArray(d.notifications)) {
+        console.error("Invalid notification response", d);
+        return;
+      }
+
+      const dl = document.getElementById("notificationList");
+      const ml = document.getElementById("notificationListMobile");
+      const db = document.getElementById("notificationBadge");
+      const mb = document.getElementById("mobileNotifyBadge");
+
+      if (dl) dl.innerHTML = "";
+      if (ml) ml.innerHTML = "";
+
+      /* EMPTY STATE */
+      if (d.notifications.length === 0) {
+        const empty =
+          `<p class="p-4 text-gray-500 text-sm">No notifications</p>`;
+        if (dl) dl.innerHTML = empty;
+        if (ml) ml.innerHTML = empty;
+      }
+
+      /* POPULATE */
+      d.notifications.forEach(n => {
+        const item = `
+          <a href="/product/${n.product_id}"
+             class="block p-3 border-b hover:bg-gray-100">
+            <p class="font-semibold text-sm">${n.title}</p>
+            <p class="text-xs text-gray-600">${n.message}</p>
+          </a>
+        `;
+        if (dl) dl.innerHTML += item;
+        if (ml) ml.innerHTML += item;
+      });
+
+      /* BADGES */
+      if (d.unread_count > 0) {
+        if (db) {
+          db.textContent = d.unread_count;
+          db.classList.remove("hidden");
+        }
+        if (mb) {
+          mb.textContent = d.unread_count;
+          mb.classList.remove("hidden");
+        }
+      } else {
+        db?.classList.add("hidden");
+        mb?.classList.add("hidden");
+      }
+    })
+    .catch(err => console.error("Notification error:", err));
+}
+
+/* ================= CLEAR NOTIFICATIONS ================= */
+function clearNotifications() {
+  fetch("/notifications/clear", { method: "POST" })
+    .then(res => res.json())
+    .then(data => {
+      if (!data.success) return;
+
+      const empty =
+        `<p class="p-4 text-gray-500 text-sm">No notifications</p>`;
+
+      document.getElementById("notificationList") &&
+        (document.getElementById("notificationList").innerHTML = empty);
+
+      document.getElementById("notificationListMobile") &&
+        (document.getElementById("notificationListMobile").innerHTML = empty);
+
+      document.getElementById("notificationBadge")?.classList.add("hidden");
+      document.getElementById("mobileNotifyBadge")?.classList.add("hidden");
+    })
+    .catch(err => console.error("Clear notification error:", err));
+}
+
+/* ================= INIT ================= */
+document.addEventListener("DOMContentLoaded", () => {
+  updateCartBadge();
+  loadNotifications();
+});
+
+</script>
+
+</body>
+</html>

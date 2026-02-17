@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-6">
+
+  <a href="{{ url_for('shop.categories') }}"
+     class="inline-block mb-4 px-4 py-2 bg-gray-200 hover:bg-gray-300
+            rounded-lg text-sm font-semibold text-black">
+    ← Back
+  </a>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+    <!-- IMAGE SLIDER -->
+    <div class="bg-gray-50 rounded-xl p-4 relative">
+      {% set images = product.images if product.images else [product.image] %}
+
+      <div class="relative h-[280px] sm:h-[360px] md:h-[420px] overflow-hidden rounded-xl">
+        {% for image in images %}
+        <img src="{{ image }}"
+             class="product-slide absolute inset-0 w-full h-full
+                    object-contain opacity-0 transition-opacity duration-500">
+        {% endfor %}
+
+        {% if images|length > 1 %}
+        <button onclick="prevImage()"
+          class="absolute left-3 top-1/2 -translate-y-1/2
+                 bg-black/50 text-white w-10 h-10 rounded-full">‹</button>
+
+        <button onclick="nextImage()"
+          class="absolute right-3 top-1/2 -translate-y-1/2
+                 bg-black/50 text-white w-10 h-10 rounded-full">›</button>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- PRODUCT INFO -->
+    <div>
+
+      <h1 class="text-2xl font-bold text-black mb-3">
+        {{ product.name }}
+      </h1>
+
+      <!-- PRICE / RESTOCKING -->
+      {% if product.stock > 0 %}
+        {% if product.is_offer and product.offer_price %}
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-2xl font-bold text-green-600">
+            ₹{{ product.offer_price }}
+          </span>
+          <span class="text-lg text-gray-500 line-through">
+            ₹{{ product.price }}
+          </span>
+        </div>
+        <p class="text-sm text-red-600 font-semibold mb-4">
+          🔥 Limited time offer
+        </p>
+        {% else %}
+        <div class="text-2xl font-bold mb-4 text-black">
+          ₹{{ product.price }}
+        </div>
+        {% endif %}
+      {% else %}
+        <div class="text-2xl font-bold mb-6 text-red-600">
+          Restocking
+        </div>
+      {% endif %}
+
+      <!-- QUANTITY -->
+      <div class="flex items-center gap-3 mb-6 text-black">
+        <span class="font-semibold">Quantity:</span>
+        <button onclick="changeQty(-1)"
+                class="px-3 py-1 bg-gray-200 rounded"
+                {% if product.stock == 0 %}disabled{% endif %}>−</button>
+
+        <input id="qty" type="number" value="1" min="1"
+               class="w-14 text-center border rounded"
+               {% if product.stock == 0 %}disabled{% endif %}>
+
+        <button onclick="changeQty(1)"
+                class="px-3 py-1 bg-gray-200 rounded"
+                {% if product.stock == 0 %}disabled{% endif %}>+</button>
+      </div>
+
+      <!-- ACTION BUTTONS -->
+      <div class="flex flex-wrap gap-4">
+        {% if product.stock > 0 %}
+        <button onclick="addToCartWithQty('{{ product._id }}')"
+          class="px-6 py-2 bg-yellow-400 hover:bg-yellow-500
+                 rounded font-semibold w-full sm:w-auto text-blue-900">
+          Add to Cart <i class="fa-solid fa-cart-shopping text-xl"></i>
+        </button>
+
+        <form method="POST" action="/cart/buy-now/{{ product._id }}">
+          <input type="hidden" name="qty" id="buyQty">
+          <button onclick="syncQty()"
+            class="px-6 py-2 bg-green-600 hover:bg-green-700
+                   text-white rounded font-semibold w-full sm:w-auto">
+            Buy Now
+          </button>
+        </form>
+        {% else %}
+        <button disabled
+          class="px-6 py-2 bg-gray-300 text-gray-500
+                 rounded font-semibold w-full sm:w-auto cursor-not-allowed">
+          Restocking
+        </button>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DESCRIPTION -->
+  <div class="mt-10">
+    <h2 class="text-xl font-semibold mb-4 text-black">About this item</h2>
+    <div class="text-gray-800 space-y-4">
+      {{ product.description | safe }}
+    </div>
+  </div>
+
+  <!-- RELATED PRODUCTS -->
+  {% if related_products %}
+<div class="mt-12">
+  <h2 class="text-xl font-bold mb-4 text-black flex items-center gap-2">
+    Related Products 🛒
+  </h2>
+
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+
+    {% for rp in related_products %}
+    <div class="bg-white rounded-2xl p-4 shadow-md hover:shadow-xl transition">
+
+      <!-- IMAGE + OFFER BADGE -->
+      <div class="relative h-44 mb-3 overflow-hidden rounded-lg">
+
+        {% set img = rp.images[0] if rp.images else rp.image %}
+        <img
+          src="{{ img if img.startswith('/static/') else '/static/uploads/' ~ img }}"
+          class="w-full h-full object-cover"
+        >
+
+        {% if rp.is_offer and rp.offer_price %}
+        <span class="absolute top-2 left-2
+                     bg-red-600 text-white text-xs
+                     px-2 py-0.5 rounded-full font-semibold">
+          OFFER
+        </span>
+        {% endif %}
+
+      </div>
+
+      <!-- NAME -->
+      <p class="text-sm font-medium line-clamp-2 mb-2 text-black">
+        {{ rp.name }}
+      </p>
+
+      <!-- PRICE / RESTOCK -->
+      <div class="mb-3">
+        {% if rp.stock > 0 %}
+          {% if rp.is_offer and rp.offer_price %}
+            <span class="text-lg font-bold text-green-600">
+              ₹{{ rp.offer_price }}
+            </span>
+            <span class="text-sm text-gray-400 line-through ml-2">
+              ₹{{ rp.price }}
+            </span>
+          {% else %}
+            <span class="text-lg font-bold text-black">
+              ₹{{ rp.price }}
+            </span>
+          {% endif %}
+        {% else %}
+          <span class="text-red-600 font-semibold">
+            Restocking
+          </span>
+        {% endif %}
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="flex justify-between items-center">
+        <a href="/product/{{ rp._id }}"
+           class="text-sm text-blue-600 font-semibold hover:underline">
+          View
+        </a>
+
+        {% if rp.stock > 0 %}
+        <button onclick="addToCart('{{ rp._id }}')"
+                class="w-10 h-10 bg-yellow-400 hover:bg-yellow-500
+                       rounded-full text-black font-bold">
+          <i class="fa-solid fa-cart-shopping text-xl"></i>
+        </button>
+        {% else %}
+        <button disabled
+                class="w-10 h-10 bg-gray-300 rounded-full
+                       text-gray-500 cursor-not-allowed">
+          <i class="fa-solid fa-cart-shopping text-xl"></i>
+        </button>
+        {% endif %}
+      </div>
+
+    </div>
+    {% endfor %}
+
+  </div>
+</div>
+{% endif %}
+
+ <!-- ================= CUSTOMER REVIEWS ================= -->
+<div class="mt-14">
+
+  <h2 class="text-xl font-bold mb-4 text-black">
+    Customer Reviews
+  </h2>
+
+  <!-- ========== ADD REVIEW FORM ========== -->
+  {% if current_user.is_authenticated %}
+  <form method="POST"
+        action="/product/{{ product._id }}/review"
+        enctype="multipart/form-data"
+        class="bg-white p-5 rounded-lg shadow mb-6 space-y-4">
+
+    <!-- Rating -->
+    <select name="rating"
+            required
+            class="border rounded px-3 py-2 text-black">
+      <option value="">Select Rating ⭐</option>
+      {% for i in range(1,6) %}
+        <option value="{{ i }}">{{ i }} ⭐</option>
+      {% endfor %}
+    </select>
+
+    <!-- Review Text -->
+    <textarea
+      name="comment"
+      required
+      rows="3"
+      placeholder="Write your review here..."
+      class="w-full border rounded-lg p-3 text-black"
+    ></textarea>
+
+    <!-- Upload Images -->
+    <input
+      type="file"
+      name="images"
+      multiple
+      accept="image/*"
+      class="w-full border p-2 rounded text-black"
+    >
+
+    <button
+      type="submit"
+      class="px-6 py-2 bg-yellow-500 text-white rounded
+             hover:bg-yellow-600 transition">
+      Submit Review
+    </button>
+
+  </form>
+  {% else %}
+    <p class="text-gray-500">
+      Please <a href="/login" class="text-blue-600 underline">login</a>
+      to write a review.
+    </p>
+  {% endif %}
+
+  <!-- ========== REVIEW LIST ========== -->
+  {% if reviews and reviews|length > 0 %}
+    {% for review in reviews %}
+    <div class="border rounded p-4 mb-4 bg-gray-50">
+
+      <div class="flex justify-between items-center text-black">
+        <strong>{{ review.user_name }}</strong>
+        <span class="text-yellow-500 font-semibold">
+          ★ {{ review.rating }}/5
+        </span>
+      </div>
+
+      <p class="mt-2 text-black">
+        {{ review.comment }}
+      </p>
+
+      <!-- Review Images -->
+      {% if review.images %}
+      <div class="flex gap-2 mt-3 flex-wrap">
+        {% for img in review.images %}
+        <img
+          src="{{ img }}"
+          class="w-20 h-20 object-cover rounded border"
+        >
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Delete Review -->
+      {% if current_user.is_authenticated and review.user_id == current_user.id %}
+      <form method="POST"
+            action="/review/{{ review._id }}/delete"
+            class="mt-2">
+        <button class="text-red-600 text-sm">
+          🗑 Delete
+        </button>
+      </form>
+      {% endif %}
+
+    </div>
+    {% endfor %}
+  {% else %}
+    <p class="text-gray-500">
+      No reviews yet. Be the first to review this product!
+    </p>
+  {% endif %}
+
+</div>
+
+</div>
+<!-- ================= JS ================= -->
+ <script>
+const uploadInput = document.getElementById("imageUpload");
+const preview = document.getElementById("previewContainer");
+
+uploadInput.addEventListener("change", () => {
+  preview.innerHTML = "";
+  [...uploadInput.files].forEach(file => {
+    const img = document.createElement("img");
+    img.src = URL.createObjectURL(file);
+    img.className = "w-20 h-20 object-cover rounded border";
+    preview.appendChild(img);
+  });
+});
+</script>
+
+<script>
+let index = 0;
+const slides = document.querySelectorAll(".product-slide");
+const dots = document.querySelectorAll(".dot");
+
+function showSlide(i){
+  slides.forEach((s, idx) => s.style.opacity = idx === i ? "1" : "0");
+  dots.forEach((d, idx) => d.classList.toggle("bg-black", idx === i));
+}
+function nextImage(){ index = (index + 1) % slides.length; showSlide(index); }
+function prevImage(){ index = (index - 1 + slides.length) % slides.length; showSlide(index); }
+if(slides.length) showSlide(0);
+
+function changeQty(v){
+  const q = document.getElementById("qty");
+  q.value = Math.max(1, parseInt(q.value) + v);
+}
+function syncQty(){
+  document.getElementById("buyQty").value =
+    document.getElementById("qty").value;
+}
+function addToCartWithQty(id){
+  fetch(`/cart/add-ajax/${id}`,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ qty: document.getElementById("qty").value })
+  }).then(()=>alert("Added to cart"));
+}
+</script>
+{% endblock %}

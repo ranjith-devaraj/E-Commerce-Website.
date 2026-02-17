@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto card center">
+  <h1 class="text-2xl font-bold mb-4 text-center text-black">Login</h1>
+
+  {% if error %}
+    <p class="text-red-500 mb-3 text-center">{{ error }}</p>
+  {% endif %}
+
+  <!-- LOGIN FORM -->
+  <form method="POST" action="/login" class="space-y-4">
+    <input
+      type="email"
+      name="email"
+      placeholder="Email"
+      required
+      class="w-full p-2 border rounded text-black"
+    />
+
+    <input
+      type="password"
+      name="password"
+      placeholder="Password"
+      required
+      class="w-full p-2 border rounded text-black"
+    />
+
+    <button class="btn-primary w-full">Login</button>
+  </form>
+
+  <div class="text-center text-sm text-gray-500 my-4">
+    — OR —
+  </div>
+
+  <!-- GOOGLE LOGIN -->
+  <a href="/google/login"
+     class="btn-primary w-full text-center block">
+   <i class="fa-brands fa-google text-red-500 text-xl"></i>Login with Google
+  </a>
+
+  <!-- REGISTER LINK -->
+  <p class="text-center text-sm mt-6 text-black">
+    Don’t have an account?
+    <a href="/register" class="text-yellow-500 font-semibold hover:underline">
+      Create Account
+    </a>
+  </p>
+</div>
+{% endblock %}

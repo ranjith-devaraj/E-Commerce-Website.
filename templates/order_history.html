@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}My Orders{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-6 text-black">Order History</h1>
+
+{% if orders %}
+  {% for order in orders %}
+    <div class="card mb-6">
+
+      <!-- HEADER -->
+      <div class="flex justify-between items-center mb-2 text-black">
+        <div class="font-semibold">
+          Order ID: {{ order._id }}
+        </div>
+        <div class="text-sm text-gray-500 text-black">
+          {{ order.created_at.strftime("%d %b %Y") if order.created_at }}
+        </div>
+      </div>
+
+      <!-- STATUS -->
+      <div class="mb-3 text-sm text-black">
+        Status:
+        {% if order.status == "Cancelled" %}
+          <span class="font-semibold text-red-500">
+            {{ order.status }}
+          </span>
+        {% elif order.status in ["Shipped", "Out for Delivery", "Delivered"] %}
+          <span class="font-semibold text-blue-500 text-black">
+            {{ order.status }}
+          </span>
+        {% else %}
+          <span class="font-semibold text-yellow-500 text-black">
+            {{ order.status }}
+          </span>
+        {% endif %}
+      </div>
+
+      <!-- ITEMS -->
+      <ul class="text-sm mb-4 text-black">
+        {% for item in order["items"] %}
+          <li class="flex justify-between border-b py-1 text-black">
+            <span>{{ item.name }} × {{ item.qty }}</span>
+            <span>₹{{ item.item_total }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+
+      <!-- FOOTER -->
+      <div class="flex justify-between items-center mt-4">
+
+        <!-- TOTAL -->
+        <div class="font-bold text-black">
+          Total: ₹{{ order.total_amount }}
+        </div>
+
+        <!-- CANCEL BUTTON (ONLY BEFORE SHIPPED) -->
+        {% if order.status in [
+            "Order Placed",
+            "Payment Submitted",
+            "Payment Verified",
+            "Packed",
+            "Cash on Delivery"
+        ] %}
+          <form method="POST"
+                action="/orders/cancel/{{ order._id }}"
+                onsubmit="return confirm('Are you sure you want to cancel this order? the cancel order in 24 hours, after the 24 hours some amount detected  ');">
+
+            <button
+              class="px-4 py-2 bg-red-500 hover:bg-red-600
+                     text-white rounded font-semibold">
+              Cancel Order
+            </button>
+          </form>
+        {% endif %}
+
+      </div>
+
+    </div>
+  {% endfor %}
+{% else %}
+  <p class="text-gray-500">You have not placed any orders yet.</p>
+{% endif %}
+
+{% endblock %}
